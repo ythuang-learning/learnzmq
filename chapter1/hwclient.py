@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from gevent_zeromq import zmq
 import gevent
 import time
