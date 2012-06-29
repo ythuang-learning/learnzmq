@@ -10,34 +10,39 @@ ctx = zmq.Context()
 
 
 def sleep():
-    sleepinterval = random.random() * 3
-    print "sleeping ", sleepinterval
-    time.sleep(sleepinterval)
+    sleep_interval = random.random() * 3
+    print "sleeping ", sleep_interval
+    time.sleep(sleep_interval)
 
 
 def client_send(id):
     socket = ctx.socket(zmq.REQ)
     socket.connect("tcp://localhost:5555")
-    msg = [id, "hello"]
+
     #sleep()
-    for request in range(1, 10):
-        print "Client %d Sending request %s ... " % (id,request)
+    for request in range(1, 1001):
+        print "Client %d Sending request %s ... " % (id, request)
+        msg = {"id": id, "msg": "Hello", "req_id": request}
         socket.send(msgpack.packb(msg))
         #sleep()
-        reply_msg =msgpack.unpackb(socket.recv())
-        print "Client %d Received reply %d: %s" % (id, request, reply_msg)
-    socket.close()
-print time.ctime()
-threads = [gevent.spawn(client_send,i) for i in range(1,10)]
-gevent.joinall(threads)
+        reply_msg = msgpack.unpackb(socket.recv())
+        print "Reply: Client %d Received reply %d: %s" % (reply_msg['id'], reply_msg['req_id'], reply_msg['msg'])
 
+    socket.close()
+
+start_time = time.time()
+threads = [gevent.spawn(client_send, i) for i in range(1, 11)]
+gevent.joinall(threads)
+end_time = time.time()
+elapsed = end_time - start_time
 
 print "sending end message"
 end_socket = ctx.socket(zmq.REQ)
 end_socket.connect("tcp://localhost:5555")
-end_msg = msgpack.packb(['end'])
-end_socket.send(end_msg)
-time.sleep(0.1)
+end_msg = {"id": 0, "msg": "Bye", "req_id": 0}
+end_socket.send(msgpack.packb(end_msg))
+reply_msg = msgpack.unpackb(end_socket.recv())
 end_socket.close()
 print "sent end message"
-print time.ctime()
+print "Time taken: ", elapsed
+print "Msg/s: ", 10000/elapsed

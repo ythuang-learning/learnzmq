@@ -10,17 +10,14 @@ socket = ctx.socket(zmq.REP)
 
 socket.bind("tcp://*:5555")
 
-dowork = True
-while dowork:
+do_work = True
+while do_work:
     msg = msgpack.unpackb(socket.recv())
-    #print "message length: ", len(msg), "message:", msg
-    msglen = len(msg)
-    if msglen == 3:
-        #print "Received message %d [%s] from client %d" %(msg[2], msg[1], msg[0])
-        #time.sleep(1)
-        reply_msg = msgpack.packb("World")
-        socket.send(reply_msg)
-    elif msglen == 1:
-        dowork = False
+
+    print "Received: Client %d sent message #%d with text:[%s] " % ( msg['id'], msg['req_id'], msg['msg'])
+    if msg['msg'] == "Bye":
+        do_work = False
+    msg['msg'] = "World"
+    socket.send(msgpack.packb(msg))
 
 socket.close()
